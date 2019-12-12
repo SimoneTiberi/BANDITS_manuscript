@@ -1,5 +1,8 @@
 This repository contains the code used for the analyses presented in the manuscript "BANDITS: Bayesian differential splicing accounting for sample-to-sample variability and mapping uncertainty", which presents the differential splicing R/Bioconductor package BANDITS.
 
+Link to manuscript (currently on Biorxiv): https://doi.org/10.1101/750018
+Link to BANDITS Bioconductor package: https://bioconductor.org/packages/release/bioc/html/BANDITS.html
+
 The code is organized in four folders:
 
 - `Simulated data 6 vs 6` contains the code to simulate the "6 vs 6" data used in the paper.
