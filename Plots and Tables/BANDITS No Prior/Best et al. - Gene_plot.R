@@ -33,7 +33,6 @@ RES = RES[RES$gene_id %in% c(gene_rank[1:10000], validated), ]
 ####################################################################################################################################
 # BANDITS:
 load("BANDITS results.RData")
-# load("BANDITS results Filtered.RData") # for 6 vs 6 filtered transcriptome
 library(BANDITS)
 res = top_genes(results)
 fdr = res$adj.p.values
@@ -45,141 +44,24 @@ match = match(RES$gene_id, gene_id)
 RES$BANDITS = fdr[match]
 RES$BANDITS_inv = fdr_inv[match]
 
-gene_id = "ENSG00000150782"
-res = gene(results, gene_id); res
-library(xtable)
-xtable(res$transcript_results[c(2, 4)])
-# Table S9
-plot_proportions(results, gene_id)
-# Figure S13
-
-gene_id = "ENSG00000147679"
-res = gene(results, gene_id); res
-library(xtable)
-xtable(res$transcript_results[c(2, 4)])
-# Table S10
-plot_proportions(results, gene_id)
-# Figure S16
-
 rm(fdr); rm(fdr_inv); rm(gene_id); rm(match); 
 
 ####################################################################################################################################
-# BayesDRIMSeq
-load("BayeDRIMSeq_results.RData")
-fdr = 1-myRes$FDRraw
-fdr_inv = 1-myRes$fdrTrust
-gene_id = myRes$geneNames
-
-# FDRRaw is the FDR
-# fdrTrust is the corrected FDR for the inversion criterion.
+# BANDITS No prior:
+load("BANDITS results NoPrior.RData")
+res = top_genes(results)
+fdr = res$adj.p.values
+fdr_inv = res$adj.p.values_inverted
+gene_id = res$Gene_id
 
 match = match(RES$gene_id, gene_id)
+RES$gene_id[1:5]
+gene_id[match][1:5]
 
-RES$BayesDRIMSeq = fdr[match]
-RES$BayesDRIMSeq_inv = fdr_inv[match]
+RES$BANDITS_NoPrior = fdr[match]
+RES$BANDITS_NoPrior_inv = fdr_inv[match]
 
-rm(fdr); rm(fdr_inv); rm(gene_id); rm(match); 
-
-####################################################################################################################################
-# cjBitSeq
-myRes = read.table("withinGeneEstimates.txt", header = T)
-fdr = 1-myRes$FDRraw
-fdr_inv = 1-myRes$FDR
-gene_id = myRes$geneName
-
-# FDRRaw is the FDR
-# FDR is the corrected FDR for the inversion criterion.
-
-match = match(RES$gene_id, gene_id)
-
-RES$cjBitSeq = fdr[match]
-RES$cjBitSeq_inv = fdr_inv[match]
-
-rm(fdr); rm(fdr_inv); rm(gene_id); rm(match); 
-
-####################################################################################################################################
-# DEXSeq
-load("DEXSeq results.RData")
-fdr = res_gene$qval
-gene_id = res_gene$gene
-
-match = match(RES$gene_id, gene_id)
-
-RES$DEXSeq = fdr[match]
-
-rm(fdr); rm(gene_id); rm(match); 
-
-####################################################################################################################################
-# DEXSeq ECCs
-load("DEXSeq_ECs results.RData")
-fdr = res_gene$qval
-gene_id = res_gene$gene
-
-match = match(RES$gene_id, gene_id)
-
-RES$DEXSeq_ECCs = fdr[match]
-
-rm(fdr); rm(gene_id); rm(match)
-
-####################################################################################################################################
-# DEXSeq transcripts
-load("DEXSeq_TECs results.RData")
-fdr = res_gene$qval
-gene_id = res_gene$gene
-
-match = match(RES$gene_id, gene_id)
-
-RES$DEXSeq_TECs = fdr[match]
-
-rm(fdr); rm(gene_id); rm(match)
-
-####################################################################################################################################
-# DRIMSeq
-load("DRIMSeq results.RData")
-fdr = results_gene$adj_pvalue
-gene_id = results_gene$gene_id
-
-match = match(RES$gene_id, gene_id)
-
-RES$DRIMSeq = fdr[match]
-
-rm(fdr); rm(gene_id); rm(match)
-
-####################################################################################################################################
-# limma
-load("limma results.RData")
-fdr = res$FDR
-gene_id = res$GeneID
-
-match = match(RES$gene_id, gene_id)
-
-RES$limma = fdr[match]
-
-rm(fdr); rm(gene_id); rm(match)
-
-####################################################################################################################################
-# rats (with bootstrap)
-load("rats results.RData")
-fdr = res_boot$pval_corr
-gene_id = res_boot$parent_id
-
-match = match(RES$gene_id, gene_id)
-
-RES$rats = fdr[match]
-
-rm(fdr); rm(gene_id); rm(match)
-
-####################################################################################################################################
-# SUPPA
-load("SUPPA2 results.RData")
-fdr = res_SUPPA
-gene_id = names(res_SUPPA)
-
-match = match(RES$gene_id, gene_id)
-
-RES$SUPPA2 = fdr[match]
-
-rm(fdr); rm(gene_id); rm(match)
+rm(res); rm(fdr); rm(gene_id); rm(match); rm(results)
 
 ####################################################################################################################################
 # I set to 1 the NA's, Inf and -1
@@ -197,30 +79,11 @@ rownames(padj_icobra) = RES$gene_id
 truth_cobra = data.frame(status = RES$truth )
 rownames(truth_cobra) = RES$gene_id
 
-# icobra data:
-cobra = COBRAData(padj = padj_icobra,
-                  truth = truth_cobra,
-                  object_to_extend = NULL)
-
-cobraperf <- calculate_performance(cobra, binary_truth = "status")
-slotNames(cobraperf)
-
 ## Define colour scheme:
-library(RColorBrewer); #library(plotly)
-
-colours = c(brewer.pal(3, "Greens")[2:3],
-            brewer.pal(6, "BuPu")[3:6],
-            brewer.pal(4, "Greys")[2:4],
-            brewer.pal(6, "OrRd")[3:6],
-            "white")
-
-all_methods = c("BANDITS", "BANDITS_inv", "DRIMSeq", "SUPPA2", 
-                "cjBitSeq", "cjBitSeq_inv", "BayesDRIMSeq", "BayesDRIMSeq_inv", 
-                "DEXSeq", "DEXSeq_TECs", "DEXSeq_ECCs", "limma", "rats")
-all_methods = sort(all_methods)
-cols = match( c(colnames(RES)[-c(1,2)], "truth"),  c(all_methods, "truth") )
-
-marker = list(color = c(colours[cols]))
+library(RColorBrewer); 
+colours = c(brewer.pal(3, "BuPu")[2:3],
+            brewer.pal(3, "OrRd")[2:3], "white")
+marker = list(color = colours)
 
 cobraplot <- prepare_data_for_plot(cobraperf, colorscheme = marker$color, 
                                    facetted = TRUE, incloverall = FALSE,
@@ -229,7 +92,7 @@ cobraplot <- prepare_data_for_plot(cobraperf, colorscheme = marker$color,
 library(ggplot2); library(wesanderson)
 
 plot_roc(cobraplot, linewidth = 1) +
-  scale_colour_manual(values = colours[cols], name  = "method") +
+  scale_colour_manual(values = marker$color, name  = "method") +
   theme(strip.background = element_blank(),
         strip.text = element_blank(),
         aspect.ratio = 0.75,
@@ -243,8 +106,9 @@ plot_roc(cobraplot, linewidth = 1) +
         axis.text.x = element_text(angle = 0, hjust=0.5) ) +
   scale_x_sqrt(  breaks = c(0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 1) ) +
   guides(linetype = guide_legend(ncol = 3, byrow = FALSE))
+
 # saved with size: 8 * 8 cm
-# name ROC_Best_xsqrt_dotted, alias Figure S3.
+# name NoPrior_ROC_Best_xsqrt, alias Figure S20.
 
 ####################################################################################################################################
 # AUC and Median ranking:
@@ -261,24 +125,20 @@ ranking = apply(RES[,-c(1:2)], 2, rank)
 # Top 100-200 ranked genes:
 ####################################################################################################################################
 # identified genes in the top 100 by each method:
-RES_ranking_01 = apply(RES[,-c(1,2, ncol(RES))], 2, function(x){
+RES_ranking_01 = apply(RES[,-c(1,2)], 2, function(x){
   ifelse( validated %in% RES$gene_id[ order(x)[1:100] ], 1, 0)
 })
 rownames(RES_ranking_01) = validated
 top_100 = colSums(RES_ranking_01)
 top_100
 
-RES_ranking_01 = data.frame(RES_ranking_01)
-
 # identified genes in the top 100 by each method:
-RES_ranking_01 = apply(RES[,-c(1,2, ncol(RES))], 2, function(x){
+RES_ranking_01 = apply(RES[,-c(1,2)], 2, function(x){
   ifelse( validated %in% RES$gene_id[ order(x)[1:200] ], 1, 0)
 })
 rownames(RES_ranking_01) = validated
 top_200 = colSums(RES_ranking_01)
 top_200
-
-RES_ranking_01 = data.frame(RES_ranking_01)
 
 ####################################################################################################################################
 # Gene ontology analysis:
@@ -334,9 +194,9 @@ res = cbind( round(apply(ranking[RES$truth ==1,], 2, median)), #
              top_100, top_200,
              top_GO_01 = GO_res/length(top_GO), top_GO_05 = GO_res_05/length(top_GO)
 )
-ord = order(res[,1])
+ord = 1:4 # order(res[,1])
 ord
 library(xtable)
 xtable(res[ord,], digits = 2, colnames = FALSE)
 round(res[ord,], 2)
-# Table 1
+# SABLE S11
