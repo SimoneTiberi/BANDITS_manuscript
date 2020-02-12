@@ -45,7 +45,7 @@ match = match(RES$gene_id, gene_id)
 RES$BANDITS = fdr[match]
 RES$BANDITS_inv = fdr_inv[match]
 
-gene_id = "ENSG00000150782"
+gene_id = "ENSG00000184432"
 res = gene(results, gene_id); res
 library(xtable)
 xtable(res$transcript_results[c(2, 4)])
